@@ -33,6 +33,7 @@ var (
 	gitName = flag.String("git-author-name", "cs3org-bot", "Git author name")
 	gitSSH  = flag.Bool("git-ssh", false, "Use git protocol instead of https for cloning repos")
 
+	_only_build = flag.Bool("only-build", false, "Build all protos and languages but do not push to language repos")
 	_all = flag.Bool("all", false, "Compile, build and publish for all available languages, mean to be run in CI platform like Drone")
 
 	_buildProto = flag.Bool("build-proto", false, "Compile Protobuf definitions")
@@ -59,6 +60,13 @@ func init() {
 		*_pushGo = true
 		*_pushPython = true
 		*_pushJs = true
+	}
+
+	if *_only_build {
+		*_buildProto = true
+		*_buildGo = true
+		*_buildPython = true
+		*_buildJs = true
 	}
 }
 
