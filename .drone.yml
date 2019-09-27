@@ -1,0 +1,20 @@
+---
+kind: pipeline
+type: docker
+name: build
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: publish-docker-image
+  pull: always
+  image: plugins/docker
+  settings:
+    repo: cs3org/cs3apis
+    tags: latest
+    username:
+      from_secret: dockerhub_username
+    password:
+      from_secret: dockerhub_password
