@@ -312,6 +312,9 @@ func buildGo() {
 	if goBranch != protoBranch {
 		checkout(protoBranch, "build/go-cs3apis")
 	}
+	
+	// remove leftovers (existing defs)
+	os.RemoveAll("build/go-cs3apis/cs3")
 
 	cmd := exec.Command("prototool", "generate")
 	run(cmd)
