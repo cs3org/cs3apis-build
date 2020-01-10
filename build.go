@@ -34,7 +34,7 @@ var (
 	gitSSH  = flag.Bool("git-ssh", false, "Use git protocol instead of https for cloning repos")
 
 	_only_build = flag.Bool("only-build", false, "Build all protos and languages but do not push to language repos")
-	_all = flag.Bool("all", false, "Compile, build and publish for all available languages, mean to be run in CI platform like Drone")
+	_all        = flag.Bool("all", false, "Compile, build and publish for all available languages, mean to be run in CI platform like Drone")
 
 	_buildProto = flag.Bool("build-proto", false, "Compile Protobuf definitions")
 
@@ -264,6 +264,10 @@ func find(patterns ...string) []string {
 	return files
 }
 
+func findProtos() []string {
+	return find("cs3/*/*.proto", "cs3/*/*/*.proto", "cs3/*/*/*/*.proto")
+}
+
 func buildProto() {
 	dir := "."
 	cmd := exec.Command("prototool", "compile")
@@ -288,7 +292,7 @@ func buildProto() {
 	os.RemoveAll("docs")
 	os.MkdirAll("docs", 0755)
 
-	files := find("cs3/*/*.proto", "cs3/*/*/*.proto")
+	files := findProtos()
 	fmt.Println(files)
 
 	args := []string{"--doc_out=./docs", "--doc_opt=html,index.html"}
@@ -312,7 +316,7 @@ func buildGo() {
 	if goBranch != protoBranch {
 		checkout(protoBranch, "build/go-cs3apis")
 	}
-	
+
 	// remove leftovers (existing defs)
 	os.RemoveAll("build/go-cs3apis/cs3")
 
@@ -348,7 +352,7 @@ func buildPython() {
 		checkout(protoBranch, "build/python-cs3apis")
 	}
 
-	files := find("cs3/*/*.proto", "cs3/*/*/*.proto")
+	files := findProtos()
 
 	args := []string{"-m", "grpc_tools.protoc", "--python_out=./build/python-cs3apis", "-I.", "--grpc_python_out=./build/python-cs3apis"}
 	args = append(args, files...)
@@ -377,7 +381,7 @@ func buildJS() {
 		checkout(protoBranch, "build/js-cs3apis")
 	}
 
-	files := find("cs3/*/*.proto", "cs3/*/*/*.proto")
+	files := findProtos()
 
 	args := []string{"--js_out=import_style=commonjs:./build/js-cs3apis", "--grpc-web_out=import_style=commonjs,mode=grpcwebtext:./build/js-cs3apis/", "-I."}
 	args = append(args, files...)
