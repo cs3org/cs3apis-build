@@ -268,6 +268,26 @@ func findProtos() []string {
 	return find("cs3/*/*.proto", "cs3/*/*/*.proto", "cs3/*/*/*/*.proto")
 }
 
+func findFolders() []string {
+	var folders []string
+	err := filepath.Walk("cs3",
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			if info.IsDir() {
+				folders = append(folders, path)
+			}
+			return nil
+		})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return folders
+}
+
 func buildProto() {
 	dir := "."
 	cmd := exec.Command("prototool", "compile")
@@ -357,6 +377,17 @@ func buildPython() {
 	args := []string{"-m", "grpc_tools.protoc", "--python_out=./build/python-cs3apis", "-I.", "--grpc_python_out=./build/python-cs3apis"}
 	args = append(args, files...)
 	cmd := exec.Command("python", args...)
+	run(cmd)
+
+	modules := findFolders()
+
+	var initFiles []string
+	for _, f := range modules {
+		initPy := f + "/__init__.py"
+		initFiles = append(initFiles, initPy)
+	}
+
+	cmd = exec.Command("touch", initFiles...)
 	run(cmd)
 
 	// get proto repo commit id
