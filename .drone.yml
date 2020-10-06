@@ -7,6 +7,16 @@ platform:
   os: linux
   arch: amd64
 
+trigger:
+  branch:
+  - master
+  event:
+    exclude:
+    - pull_request
+    - tag
+    - promote
+    - rollback
+
 steps:
 - name: publish-docker-image
   pull: always
