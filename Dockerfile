@@ -13,7 +13,7 @@ RUN cd /tmp && curl -sSL https://github.com/protocolbuffers/protobuf/releases/do
 RUN cd /tmp && curl -sSL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64 -o prototool && sudo cp prototool /usr/local/bin/ && sudo chmod u+x /usr/local/bin/prototool
 RUN cd /tmp && curl -sSL https://github.com/nilslice/protolock/releases/download/v0.14.1/protolock.20190917T024843Z.linux-amd64.tgz -o protolock.tgz && tar -xzf protolock.tgz && sudo cp protolock /usr/local/bin/
 RUN curl -sSL https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.3.0/protoc-gen-doc-1.3.0.linux-amd64.go1.11.2.tar.gz -o protoc-gen-doc.tar.gz && tar xzfv protoc-gen-doc.tar.gz && sudo cp protoc-gen-doc-*/protoc-gen-doc /usr/local/bin/
-RUN GOPATH=`go env GOPATH` && PATH=$PATH:$GOPATH/bin && cd /tmp && go get -d -u github.com/golang/protobuf/protoc-gen-go && git -C "$(go env GOPATH)"/src/github.com/golang/protobuf checkout "v1.3.3" && go install github.com/golang/protobuf/protoc-gen-go
+RUN GOPATH=`go env GOPATH` && PATH=$PATH:$GOPATH/bin && cd /tmp && go get -d -u github.com/golang/protobuf/protoc-gen-go && git -C "$(go env GOPATH)"/src/github.com/golang/protobuf checkout "v1.3.2" && go install github.com/golang/protobuf/protoc-gen-go
 
 # deps for python
 RUN sudo python -m pip install grpcio grpcio-tools --ignore-installed
