@@ -383,7 +383,7 @@ func buildPython() {
 
 	var initFiles []string
 	for _, f := range modules {
-		initPy := f + "/__init__.py"
+		initPy := fmt.Sprintf("%s/%s/%s", "build/python-cs3apis", f, "__init__.py")
 		initFiles = append(initFiles, initPy)
 	}
 
