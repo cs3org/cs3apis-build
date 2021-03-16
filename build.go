@@ -372,6 +372,9 @@ func buildPython() {
 		checkout(protoBranch, "build/python-cs3apis")
 	}
 
+	// remove leftovers (existing defs)
+	os.RemoveAll("build/python-cs3apis/cs3")
+
 	files := findProtos()
 
 	args := []string{"-m", "grpc_tools.protoc", "--python_out=./build/python-cs3apis", "-I.", "--grpc_python_out=./build/python-cs3apis"}
@@ -411,6 +414,9 @@ func buildJS() {
 	if buildBranch != protoBranch {
 		checkout(protoBranch, "build/js-cs3apis")
 	}
+
+	// remove leftovers (existing defs)
+	os.RemoveAll("build/js-cs3apis/cs3")
 
 	files := findProtos()
 
