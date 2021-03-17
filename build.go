@@ -14,20 +14,6 @@ import (
 	"strings"
 )
 
-const (
-	// ProtobufVersion is the version of the protocol buffers.
-	ProtobufVersion = "3.7.1"
-	// PrototoolVersion specifies the version of the prototool.
-	PrototoolVersion = "1.6.0"
-)
-
-var (
-	// ProtoOS specifies the operative system for prototool.
-	ProtoOS = getProtoOS()
-	// ProtocFilename is the name of the protoc binary.
-	ProtocFilename = fmt.Sprintf("protoc-%s-%s-x86_64.zip", ProtobufVersion, ProtoOS)
-)
-
 var (
 	gitMail = flag.String("git-author-mail", "cs3org-bot@hugo.labkode.com", "Git author mail")
 	gitName = flag.String("git-author-name", "cs3org-bot", "Git author name")
@@ -290,7 +276,7 @@ func findFolders() []string {
 
 func buildProto() {
 	dir := "."
-	cmd := exec.Command("prototool", "compile")
+	cmd := exec.Command("prototool", "compile", "--walk-timeout", "10s")
 	cmd.Dir = dir
 	run(cmd)
 
@@ -299,10 +285,10 @@ func buildProto() {
 	run(cmd)
 
 	// lint
-	cmd = exec.Command("prototool", "format", "-w")
+	cmd = exec.Command("prototool", "format", "-w", "--walk-timeout", "10s")
 	cmd.Dir = dir
 	run(cmd)
-	cmd = exec.Command("prototool", "lint")
+	cmd = exec.Command("prototool", "lint", "--walk-timeout", "10s")
 	cmd.Dir = dir
 	run(cmd)
 	cmd = exec.Command("go", "run", "tools/check-license/check-license.go")
@@ -340,7 +326,7 @@ func buildGo() {
 	// remove leftovers (existing defs)
 	os.RemoveAll("build/go-cs3apis/cs3")
 
-	cmd := exec.Command("prototool", "generate")
+	cmd := exec.Command("prototool", "generate", "--walk-timeout", "10s")
 	run(cmd)
 
 	sed("build/go-cs3apis", ".go", "github.com/cs3org/go-cs3apis/build/go-cs3apis/cs3/", "github.com/cs3org/go-cs3apis/cs3/")
