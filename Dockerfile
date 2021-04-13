@@ -22,6 +22,11 @@ RUN sudo python -m pip install grpcio grpcio-tools --ignore-installed
 RUN curl -sSL https://github.com/grpc/grpc-web/releases/download/1.0.6/protoc-gen-grpc-web-1.0.6-linux-x86_64 -o /tmp/protoc-gen-grpc-web
 RUN sudo mv /tmp/protoc-gen-grpc-web /usr/local/bin/ && sudo chmod u+x /usr/local/bin/protoc-gen-grpc-web
 
+# deps for node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_15.x | bash -
+RUN apt-get install -y nodejs
+RUN npm install -g grpc-tools
+
 # compile build tool and put it into path
 ADD . /root/cs3apis-build
 RUN cd /root/cs3apis-build/ && go build . &&  sudo cp cs3apis-build /usr/local/bin && sudo chmod u+x cs3apis-build
