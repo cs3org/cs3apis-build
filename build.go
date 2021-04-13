@@ -32,6 +32,9 @@ var (
 
 	_buildJs = flag.Bool("build-js", false, "Build Js library")
 	_pushJs  = flag.Bool("push-js", false, "Push Js library to github.com/cs3org/js-cs3apis")
+
+	_buildNode = flag.Bool("build-node", false, "Build Node.js library")
+	_pushNode  = flag.Bool("push-node", false, "Push Node.js library to github.com/cs3org/node-cs3apis")
 )
 
 func init() {
@@ -42,10 +45,12 @@ func init() {
 		*_buildGo = true
 		*_buildPython = true
 		*_buildJs = true
+		*_buildNode = true
 
 		*_pushGo = true
 		*_pushPython = true
 		*_pushJs = true
+		*_pushNode = true
 	}
 
 	if *_only_build {
@@ -53,6 +58,7 @@ func init() {
 		*_buildGo = true
 		*_buildPython = true
 		*_buildJs = true
+		*_buildNode = true
 	}
 }
 
@@ -418,6 +424,44 @@ func buildJS() {
 	commit(repo, msg)
 }
 
+func buildNode() {
+	// Remove build dir
+	os.RemoveAll("build/node-cs3apis")
+	os.MkdirAll("build", 0755)
+
+	// Clone repo and set branch to current branch
+	clone("cs3org/node-cs3apis", "build")
+	protoBranch := getGitBranch(".")
+	buildBranch := getGitBranch("build/node-cs3apis")
+	fmt.Printf("Proto branch: %s\nBuild branch: %s\n", protoBranch, buildBranch)
+
+	if buildBranch != protoBranch {
+		checkout(protoBranch, "build/node-cs3apis")
+	}
+
+	nodeProtocPlugin, err := exec.LookPath("grpc_tools_node_protoc_plugin")
+
+	if err != nil {
+		panic(fmt.Sprintf("grpc_tools_node_protoc_plugin binary not found in PATH: %v\n", err))
+	}
+
+	// remove leftovers (existing defs)
+	os.RemoveAll("build/node-cs3apis/cs3")
+
+	files := findProtos()
+
+	args := []string{"--js_out=import_style=commonjs,binary:./build/node-cs3apis", "--grpc_out=./build/node-cs3apis/", "--plugin=protoc-gen-grpc=" + nodeProtocPlugin}
+	args = append(args, files...)
+	cmd := exec.Command("grpc_tools_node_protoc", args...)
+	run(cmd)
+
+	// get proto repo commit id
+	hash := getCommitID(".")
+	repo := "build/node-cs3apis"
+	msg := "Synced to https://github.com/cs3org/cs3apis/tree/" + hash
+	commit(repo, msg)
+}
+
 func pushPython() {
 	push("build/python-cs3apis")
 }
@@ -430,9 +474,13 @@ func pushJS() {
 	push("build/js-cs3apis")
 }
 
+func pushNode() {
+	push("build/node-cs3apis")
+}
+
 func main() {
 	if *_buildProto {
-		fmt.Println("Compiling and liniting protobufs ...")
+		fmt.Println("Compiling and linting protobufs ...")
 		buildProto()
 	}
 
@@ -464,5 +512,15 @@ func main() {
 	if *_pushJs {
 		fmt.Println("Pushing Js ...")
 		pushJS()
+	}
+
+	if *_buildNode {
+		fmt.Println("Building Node.js ...")
+		buildNode()
+	}
+
+	if *_pushNode {
+		fmt.Println("Pushing Node.js ...")
+		pushNode()
 	}
 }
