@@ -151,6 +151,14 @@ func commit(repo, msg string) {
 
 func push(repo string) {
 	protoBranch := getGitBranch(".")
+	branch := getGitBranch(repo)
+
+	// Prevent pushing to master when repo def. branch is main:
+	// See https://github.com/github/renaming/
+	if protoBranch == "master" && branch == "main" {
+		protoBranch = "main"
+	}
+
 	cmd := exec.Command("git", "push", "--set-upstream", "origin", protoBranch)
 	cmd.Dir = repo
 	run(cmd)
