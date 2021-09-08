@@ -307,7 +307,7 @@ func buildProto() {
 	files := findProtos()
 	fmt.Println(files)
 
-	args := []string{"--doc_out=./docs", "--doc_opt=html,index.html"}
+	args := []string{"--doc_out=./docs", "--doc_opt=html,index.html", "-I=.", "-I=./third_party"}
 	args = append(args, files...)
 	cmd = exec.Command("protoc", args...)
 	run(cmd)
