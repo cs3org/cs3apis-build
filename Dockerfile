@@ -6,7 +6,7 @@
 FROM golang
 RUN apt-get update
 RUN apt-get install build-essential curl unzip sudo -y
-RUN apt-get install python-pip -y
+RUN apt-get install python3-pip -y
 
 # deps for protoc
 RUN cd /tmp && curl -sSL https://github.com/protocolbuffers/protobuf/releases/download/v3.9.2/protoc-3.9.2-linux-x86_64.zip -o protoc.zip && unzip -o protoc.zip && sudo cp bin/protoc /usr/local/bin/protoc
@@ -16,7 +16,7 @@ RUN curl -sSL https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.
 RUN go install github.com/golang/protobuf/protoc-gen-go@v1.3.2
 
 # deps for python
-RUN sudo python -m pip install grpcio grpcio-tools --ignore-installed
+RUN sudo python3 -m pip install grpcio grpcio-tools --ignore-installed
 
 # deps for js
 RUN curl -sSL https://github.com/grpc/grpc-web/releases/download/1.0.6/protoc-gen-grpc-web-1.0.6-linux-x86_64 -o /tmp/protoc-gen-grpc-web

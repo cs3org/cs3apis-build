@@ -371,7 +371,7 @@ func buildPython() {
 
 	args := []string{"-m", "grpc_tools.protoc", "--python_out=./build/python-cs3apis", "-I.", "--grpc_python_out=./build/python-cs3apis"}
 	args = append(args, files...)
-	cmd := exec.Command("python", args...)
+	cmd := exec.Command("python3", args...)
 	run(cmd)
 
 	modules := findFolders()
