@@ -369,7 +369,7 @@ func buildPython() {
 
 	files := findProtos()
 
-	args := []string{"-m", "grpc_tools.protoc", "--python_out=./build/python-cs3apis", "-I.", "--grpc_python_out=./build/python-cs3apis"}
+	args := []string{"-m", "grpc_tools.protoc", "--python_out=./build/python-cs3apis", "-I.", "-I./third_party", "--grpc_python_out=./build/python-cs3apis"}
 	args = append(args, files...)
 	cmd := exec.Command("python3", args...)
 	run(cmd)
@@ -412,7 +412,7 @@ func buildJS() {
 
 	files := findProtos()
 
-	args := []string{"--js_out=import_style=commonjs:./build/js-cs3apis", "--grpc-web_out=import_style=commonjs,mode=grpcwebtext:./build/js-cs3apis/", "-I."}
+	args := []string{"--js_out=import_style=commonjs:./build/js-cs3apis", "--grpc-web_out=import_style=commonjs,mode=grpcwebtext:./build/js-cs3apis/", "-I.", "-I./third_party"}
 	args = append(args, files...)
 	cmd := exec.Command("protoc", args...)
 	run(cmd)
