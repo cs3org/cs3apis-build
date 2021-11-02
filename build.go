@@ -445,24 +445,24 @@ func buildNode() {
 	// 	panic(fmt.Sprintf("grpc_tools_node_protoc_plugin binary not found in PATH: %v\n", err))
 	// }
 
-	run(exec.Command("ln", "-s", "third_party/google"))
+	// run(exec.Command("ln", "-s", "third_party/google"))
 
 	// remove leftovers (existing defs)
 	os.RemoveAll("build/node-cs3apis/cs3")
 
 	files := findProtos()
 
-	args1 := []string{"--ts_out=grpc_js:./build/node-cs3apis", "--proto_path ."}
+	args1 := []string{"--ts_out=grpc_js:./build/node-cs3apis"} //, "--proto_path ."}
 	args1 = append(args1, files...)
 	cmd1 := exec.Command("protoc-gen-grpc-ts", args1...)
 	run(cmd1)
 
-	args2 := []string{"--js_out=import_style=commonjs,binary:./build/node-cs3apis", "--grpc_out=grpc_js:./build/node-cs3apis/", "--proto_path ."}
+	args2 := []string{"--js_out=import_style=commonjs,binary:./build/node-cs3apis", "--grpc_out=grpc_js:./build/node-cs3apis/"} //, "--proto_path ."}
 	args2 = append(args2, files...)
 	cmd2 := exec.Command("protoc-gen-grpc", args2...)
 	run(cmd2)
 
-	run(exec.Command("rm", "google"))
+	//, "--grpc_out=./build/node-cs3apis/", "--plugin=protoc-gen-grpc=" + nodeProtocPlugin run(exec.Command("rm", "google"))
 
 	// get proto repo commit id
 	hash := getCommitID(".")

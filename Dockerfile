@@ -25,7 +25,7 @@ RUN sudo mv /tmp/protoc-gen-grpc-web /usr/local/bin/ && sudo chmod u+x /usr/loca
 # deps for node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_15.x | bash -
 RUN apt-get install -y nodejs
-RUN npm install -g @grpc/grpc-js
+RUN npm install -g protoc-gen-grpc
 
 # compile build tool and put it into path
 ADD . /root/cs3apis-build
