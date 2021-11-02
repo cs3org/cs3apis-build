@@ -439,14 +439,6 @@ func buildNode() {
 		checkout(protoBranch, "build/node-cs3apis")
 	}
 
-	// nodeProtocPlugin, err := exec.LookPath("grpc_tools_node_protoc_plugin")
-
-	// if err != nil {
-	// 	panic(fmt.Sprintf("grpc_tools_node_protoc_plugin binary not found in PATH: %v\n", err))
-	// }
-
-	// run(exec.Command("ln", "-s", "third_party/google"))
-
 	// remove leftovers (existing defs)
 	os.RemoveAll("build/node-cs3apis/cs3")
 
@@ -461,8 +453,6 @@ func buildNode() {
 	args2 = append(args2, files...)
 	cmd2 := exec.Command("protoc-gen-grpc", args2...)
 	run(cmd2)
-
-	//, "--grpc_out=./build/node-cs3apis/", "--plugin=protoc-gen-grpc=" + nodeProtocPlugin run(exec.Command("rm", "google"))
 
 	// get proto repo commit id
 	hash := getCommitID(".")
