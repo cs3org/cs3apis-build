@@ -445,7 +445,7 @@ func buildNode() {
 	// 	panic(fmt.Sprintf("grpc_tools_node_protoc_plugin binary not found in PATH: %v\n", err))
 	// }
 
-	run(exec.Command("ln", "-s third_party/google"))
+	run(exec.Command("ln", "-s", "third_party/google"))
 
 	// remove leftovers (existing defs)
 	os.RemoveAll("build/node-cs3apis/cs3")
