@@ -3,7 +3,7 @@
 # docker build .
 # docker tag xxxx cs3org/cs3apis:latest
 # docker push cs3org/cs3apis
-FROM golang
+FROM golang:1.17.0-bullseye
 RUN apt-get update
 RUN apt-get install build-essential curl unzip sudo -y
 RUN apt-get install python3-pip -y
