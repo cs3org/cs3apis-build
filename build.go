@@ -19,47 +19,14 @@ var (
 	gitName = flag.String("git-author-name", "cs3org-bot", "Git author name")
 	gitSSH  = flag.Bool("git-ssh", false, "Use git protocol instead of https for cloning repos")
 
-	_only_build = flag.Bool("only-build", false, "Build all protos and languages but do not push to language repos")
-	_all        = flag.Bool("all", false, "Compile, build and publish for all available languages, mean to be run in CI platform like Drone")
-
-	_buildProto = flag.Bool("build-proto", false, "Compile Protobuf definitions")
-
-	_buildGo = flag.Bool("build-go", false, "Build Go library")
-	_pushGo  = flag.Bool("push-go", false, "Push Go library to github.com/cs3org/go-cs3apis")
-
-	_buildPython = flag.Bool("build-python", false, "Build Python library")
-	_pushPython  = flag.Bool("push-python", false, "Push Python library to github.com/cs3org/python-cs3apis")
-
-	_buildJs = flag.Bool("build-js", false, "Build Js library")
-	_pushJs  = flag.Bool("push-js", false, "Push Js library to github.com/cs3org/js-cs3apis")
-
-	_buildNode = flag.Bool("build-node", false, "Build Node.js library")
-	_pushNode  = flag.Bool("push-node", false, "Push Node.js library to github.com/cs3org/node-cs3apis")
+	_pushGo     = flag.Bool("push-go", false, "Push Go library to github.com/cs3org/go-cs3apis")
+	_pushPython = flag.Bool("push-python", false, "Push Python library to github.com/cs3org/python-cs3apis")
+	_pushJs     = flag.Bool("push-js", false, "Push Js library to github.com/cs3org/js-cs3apis")
+	_pushNode   = flag.Bool("push-node", false, "Push Node.js library to github.com/cs3org/node-cs3apis")
 )
 
 func init() {
 	flag.Parse()
-
-	if *_all {
-		*_buildProto = true
-		*_buildGo = true
-		*_buildPython = true
-		*_buildJs = true
-		*_buildNode = true
-
-		*_pushGo = true
-		*_pushPython = true
-		*_pushJs = true
-		*_pushNode = true
-	}
-
-	if *_only_build {
-		*_buildProto = true
-		*_buildGo = true
-		*_buildPython = true
-		*_buildJs = true
-		*_buildNode = true
-	}
 }
 
 func getProtoOS() string {
@@ -280,185 +247,57 @@ func findFolders() []string {
 	return folders
 }
 
-func buildProto() {
-	dir := "."
-	cmd := exec.Command("prototool", "compile", "--walk-timeout", "10s")
-	cmd.Dir = dir
-	run(cmd)
+func generate() {
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("current working directory: %s\n", cwd)
 
-	cmd = exec.Command("protolock", "status")
-	cmd.Dir = dir
+	cmd := exec.Command("git", "config", "--global", "--add", "safe.directory", cwd)
 	run(cmd)
-
-	// lint
-	cmd = exec.Command("prototool", "format", "-w", "--walk-timeout", "10s")
-	cmd.Dir = dir
-	run(cmd)
-	cmd = exec.Command("prototool", "lint", "--walk-timeout", "10s")
-	cmd.Dir = dir
-	run(cmd)
-	cmd = exec.Command("go", "run", "tools/check-license/check-license.go")
-	cmd.Dir = dir
-	run(cmd)
-
-	os.RemoveAll("docs")
-	os.MkdirAll("docs", 0755)
-
-	files := findProtos()
-	fmt.Println(files)
-
-	args := []string{"--doc_out=./docs", "--doc_opt=html,index.html", "-I=.", "-I=./third_party"}
-	args = append(args, files...)
-	cmd = exec.Command("protoc", args...)
-	run(cmd)
-}
-
-func buildGo() {
 
 	// Remove build dir
-	os.RemoveAll("build/go-cs3apis")
+	os.RemoveAll("build")
 	os.MkdirAll("build", 0755)
 
-	// Clone Go repo and set branch to current branch
-	clone("cs3org/go-cs3apis", "build")
-	protoBranch := getGitBranch(".")
-	goBranch := getGitBranch("build/go-cs3apis")
-	fmt.Printf("Proto branch: %s\nGo branch: %s\n", protoBranch, goBranch)
+	languages := []string{"go", "js", "node", "python"}
 
-	if goBranch != protoBranch {
-		checkout(protoBranch, "build/go-cs3apis")
+	// prepare language git repos
+	for _, l := range languages {
+		target := fmt.Sprintf("%s-cs3apis", l)
+
+		// Clone Go repo and set branch to current branch
+		clone("cs3org/"+target, "build")
+		protoBranch := getGitBranch(".")
+		targetBranch := getGitBranch("build/" + target)
+		fmt.Printf("Proto branch: %s\n%s branch: %s\n", l, protoBranch, targetBranch)
+
+		if targetBranch != protoBranch {
+			checkout(protoBranch, "build/"+target)
+		}
+
+		// remove leftovers (existing defs)
+		os.RemoveAll(fmt.Sprintf("build/%s/cs3", target))
+
 	}
 
-	// remove leftovers (existing defs)
-	os.RemoveAll("build/go-cs3apis/cs3")
-
-	cmd := exec.Command("prototool", "generate", "--walk-timeout", "10s")
+	cmd = exec.Command("buf", "generate")
 	run(cmd)
 
-	sed("build/go-cs3apis", ".go", "github.com/cs3org/go-cs3apis/build/go-cs3apis/cs3/", "github.com/cs3org/go-cs3apis/cs3/")
+	for _, l := range languages {
+		target := fmt.Sprintf("%s-cs3apis", l)
 
-	if !isRepoDirty("build/go-cs3apis") {
-		fmt.Println("Repo is clean, nothing to do")
+		if !isRepoDirty("build/" + target) {
+			fmt.Println("Repo is clean, nothing to do")
+		}
+
+		// get proto repo commit id
+		hash := getCommitID(".")
+		repo := "build/" + target
+		msg := "Synced to https://github.com/cs3org/cs3apis/tree/" + hash
+		commit(repo, msg)
 	}
-
-	// get proto repo commit id
-	hash := getCommitID(".")
-	repo := "build/go-cs3apis"
-	msg := "Synced to https://github.com/cs3org/cs3apis/tree/" + hash
-	commit(repo, msg)
-}
-
-func buildPython() {
-
-	// Remove build dir
-	os.RemoveAll("build/python-cs3apis")
-	os.MkdirAll("build", 0755)
-
-	// Clone Go repo and set branch to current branch
-	clone("cs3org/python-cs3apis", "build")
-	protoBranch := getGitBranch(".")
-	buildBranch := getGitBranch("build/python-cs3apis")
-	fmt.Printf("Proto branch: %s\nBuild branch: %s\n", protoBranch, buildBranch)
-
-	if buildBranch != protoBranch {
-		checkout(protoBranch, "build/python-cs3apis")
-	}
-
-	// remove leftovers (existing defs)
-	os.RemoveAll("build/python-cs3apis/cs3")
-
-	files := findProtos()
-
-	args := []string{"-m", "grpc_tools.protoc", "--python_out=./build/python-cs3apis", "-I.", "-I./third_party", "--grpc_python_out=./build/python-cs3apis"}
-	args = append(args, files...)
-	cmd := exec.Command("python3", args...)
-	run(cmd)
-
-	modules := findFolders()
-
-	var initFiles []string
-	for _, f := range modules {
-		initPy := fmt.Sprintf("%s/%s/%s", "build/python-cs3apis", f, "__init__.py")
-		initFiles = append(initFiles, initPy)
-	}
-
-	cmd = exec.Command("touch", initFiles...)
-	run(cmd)
-
-	// get proto repo commit id
-	hash := getCommitID(".")
-	repo := "build/python-cs3apis"
-	msg := "Synced to https://github.com/cs3org/cs3apis/tree/" + hash
-	commit(repo, msg)
-}
-
-func buildJS() {
-	// Remove build dir
-	os.RemoveAll("build/js-cs3apis")
-	os.MkdirAll("build", 0755)
-
-	// Clone repo and set branch to current branch
-	clone("cs3org/js-cs3apis", "build")
-	protoBranch := getGitBranch(".")
-	buildBranch := getGitBranch("build/js-cs3apis")
-	fmt.Printf("Proto branch: %s\nBuild branch: %s\n", protoBranch, buildBranch)
-
-	if buildBranch != protoBranch {
-		checkout(protoBranch, "build/js-cs3apis")
-	}
-
-	// remove leftovers (existing defs)
-	os.RemoveAll("build/js-cs3apis/cs3")
-
-	files := findProtos()
-
-	args := []string{"--js_out=import_style=commonjs:./build/js-cs3apis", "--grpc-web_out=import_style=commonjs,mode=grpcwebtext:./build/js-cs3apis/", "-I.", "-I./third_party"}
-	args = append(args, files...)
-	cmd := exec.Command("protoc", args...)
-	run(cmd)
-
-	// get proto repo commit id
-	hash := getCommitID(".")
-	repo := "build/js-cs3apis"
-	msg := "Synced to https://github.com/cs3org/cs3apis/tree/" + hash
-	commit(repo, msg)
-}
-
-func buildNode() {
-	// Remove build dir
-	os.RemoveAll("build/node-cs3apis")
-	os.MkdirAll("build", 0755)
-
-	// Clone repo and set branch to current branch
-	clone("cs3org/node-cs3apis", "build")
-	protoBranch := getGitBranch(".")
-	buildBranch := getGitBranch("build/node-cs3apis")
-	fmt.Printf("Proto branch: %s\nBuild branch: %s\n", protoBranch, buildBranch)
-
-	if buildBranch != protoBranch {
-		checkout(protoBranch, "build/node-cs3apis")
-	}
-
-	// remove leftovers (existing defs)
-	os.RemoveAll("build/node-cs3apis/cs3")
-
-	files := findProtos()
-
-	args1 := []string{"--ts_out=grpc_js:./build/node-cs3apis", "--proto_path=.", "--proto_path=./third_party"}
-	args1 = append(args1, files...)
-	cmd1 := exec.Command("protoc-gen-grpc-ts", args1...)
-	run(cmd1)
-
-	args2 := []string{"--js_out=import_style=commonjs,binary:./build/node-cs3apis", "--grpc_out=grpc_js:./build/node-cs3apis/", "--proto_path=.", "--proto_path=./third_party"}
-	args2 = append(args2, files...)
-	cmd2 := exec.Command("protoc-gen-grpc", args2...)
-	run(cmd2)
-
-	// get proto repo commit id
-	hash := getCommitID(".")
-	repo := "build/node-cs3apis"
-	msg := "Synced to https://github.com/cs3org/cs3apis/tree/" + hash
-	commit(repo, msg)
 }
 
 func pushPython() {
@@ -478,24 +317,11 @@ func pushNode() {
 }
 
 func main() {
-	if *_buildProto {
-		fmt.Println("Compiling and linting protobufs ...")
-		buildProto()
-	}
-
-	if *_buildGo {
-		fmt.Println("Building Go ...")
-		buildGo()
-	}
+	generate()
 
 	if *_pushGo {
 		fmt.Println("Pushing Go ...")
 		pushGo()
-	}
-
-	if *_buildPython {
-		fmt.Println("Building Python ...")
-		buildPython()
 	}
 
 	if *_pushPython {
@@ -503,19 +329,9 @@ func main() {
 		pushPython()
 	}
 
-	if *_buildJs {
-		fmt.Println("Building JS ...")
-		buildJS()
-	}
-
 	if *_pushJs {
 		fmt.Println("Pushing Js ...")
 		pushJS()
-	}
-
-	if *_buildNode {
-		fmt.Println("Building Node.js ...")
-		buildNode()
 	}
 
 	if *_pushNode {
