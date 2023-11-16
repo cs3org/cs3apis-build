@@ -252,6 +252,7 @@ func generate() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Starting generation of protobuf language bindings ...")
 	fmt.Printf("current working directory: %s\n", cwd)
 
 	cmd := exec.Command("git", "config", "--global", "--add", "safe.directory", cwd)
@@ -266,6 +267,7 @@ func generate() {
 	// prepare language git repos
 	for _, l := range languages {
 		target := fmt.Sprintf("%s-cs3apis", l)
+		fmt.Println("cloning repo for " + target)
 
 		// Clone Go repo and set branch to current branch
 		clone("cs3org/"+target, "build")
@@ -282,11 +284,13 @@ func generate() {
 
 	}
 
+	fmt.Println("Generating ...")
 	cmd = exec.Command("buf", "generate")
 	run(cmd)
 
 	for _, l := range languages {
 		target := fmt.Sprintf("%s-cs3apis", l)
+		fmt.Println("Commiting changes for " + target)
 
 		if !isRepoDirty("build/" + target) {
 			fmt.Println("Repo is clean, nothing to do")
@@ -298,6 +302,7 @@ func generate() {
 		msg := "Synced to https://github.com/cs3org/cs3apis/tree/" + hash
 		commit(repo, msg)
 	}
+	fmt.Println("Generation done!")
 }
 
 func pushPython() {
